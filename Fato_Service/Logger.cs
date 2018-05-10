@@ -231,6 +231,9 @@ namespace Fato_Service
             DataTable dt = new DataTable();
             da.Fill(dt);
             cmd.Parameters.Clear();
+
+            cmd.CommandTimeout = 900;
+
             return dt;
         }
 

@@ -28,20 +28,26 @@ namespace Fato_Service
                 string ConnectionString = string.Empty;
                 objlogger.WriteLogs = true;
                 objlogger.sCompanyID = strCompId;
+
+#if DEBUG
+                ConnectionString = "Server=XXXX;Initial Catalog=XXXX;Integrated Security=False;User ID=XXXX;Password=XXXX;";
+#else
                 ConnectionString = objlogger.DBConnect(strCompId, "CBD");
-                DataTable dt_FATO_Insert_Update = Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", null, null,null, strCompId, 1);
+#endif
+
+                DataTable dt_FATO_Insert_Update = Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", null, null,null, strCompId, 1, 1);
                 if (dt_FATO_Insert_Update.Rows.Count > 0)
                 {
                     DateTime FATO_Insert_Date = Convert.ToDateTime(dt_FATO_Insert_Update.Rows[0]["Fato_insert_date"]);
 
                     if (DateTime.Now.Date > FATO_Insert_Date.AddDays(1).Date)
                     {
-                        Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), null, strCompId, 2);
+                        Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), null, strCompId, 2, 1);
                         strLog.Append(Environment.NewLine + "Insert Records In FATO TABLE : " + System.DateTime.Now + Environment.NewLine + Environment.NewLine);
 
                     }
 
-                    Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"),null, strCompId, 3);
+                    Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"),null, strCompId, 3, 1);
                     strLog.Append(Environment.NewLine + "Update Records In FATO TABLE : " + System.DateTime.Now + Environment.NewLine + Environment.NewLine);
 
 

@@ -1320,7 +1320,7 @@ AS
             END
         ELSE
             BEGIN
-                UPDATE  FATO_Records
+                UPDATE  FATO_Records WITH(ROWLOCK)
                 SET     Booking_Ref = AP.Booking_Ref ,
                         Company_id = AP.Company_id ,
                         Affiliate_Id = AP.Affiliate_Id ,

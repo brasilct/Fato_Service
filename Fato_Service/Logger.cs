@@ -232,8 +232,6 @@ namespace Fato_Service
             da.Fill(dt);
             cmd.Parameters.Clear();
 
-            cmd.CommandTimeout = 1800;
-
             return dt;
         }
 
@@ -245,6 +243,7 @@ namespace Fato_Service
             }
             command.Connection = connection;
             command.CommandText = commandText;
+            command.CommandTimeout = 900;
             if (transaction != null)
             {
                 command.Transaction = transaction;

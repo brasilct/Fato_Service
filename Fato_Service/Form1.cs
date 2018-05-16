@@ -18,12 +18,8 @@ namespace Fato_Service
             Logger objlogger = new Logger();
             StringBuilder strLog = new StringBuilder();
             XmlDocument xComp = new XmlDocument();
-           // string Path = Assembly.GetExecutingAssembly().CodeBase.Replace(".EXE", "").Replace(".exe", "") + "//FATOConfig.xml";
-           // xComp.Load(Path);
             try
             {
-                //foreach (XmlNode compId in xComp.DocumentElement.SelectNodes("//CompanyRegistered/Company"))
-                // {
                 string strCompId = "BC";
                 string ConnectionString = string.Empty;
                 objlogger.WriteLogs = true;
@@ -39,27 +35,22 @@ namespace Fato_Service
                 if (dt_FATO_Insert_Update.Rows.Count > 0)
                 {
                     DateTime FATO_Insert_Date = Convert.ToDateTime(dt_FATO_Insert_Update.Rows[0]["Fato_insert_date"]);
+                    DateTime CurrentDate = DateTime.Parse(DateTime.Now.ToString("dd/MM/yyyy hh:00:00"));
 
-                    if (DateTime.Now.Date > FATO_Insert_Date.AddDays(1).Date)
+                    if (CurrentDate > FATO_Insert_Date)
                     {
-                        Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), null, strCompId, 2, 1);
-                        strLog.Append(Environment.NewLine + "Insert Records In FATO TABLE : " + System.DateTime.Now + Environment.NewLine + Environment.NewLine);
-
+                        Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", CurrentDate.AddHours(-1), CurrentDate, null, strCompId, 2, 1);
+                        strLog.Append(Environment.NewLine + "Insert Records In FATO TABLE : " + DateTime.Now + Environment.NewLine + Environment.NewLine);
                     }
 
-                    Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"), DateTime.Now.Date.AddDays(-1).ToString("ddMMMyyyy"),null, strCompId, 3, 1);
-                    strLog.Append(Environment.NewLine + "Update Records In FATO TABLE : " + System.DateTime.Now + Environment.NewLine + Environment.NewLine);
-
-
+                    Logger.ExecuteDatatable(ConnectionString, "SP_FATO_Insert_update", null, null, null, strCompId, 3, 1);
+                    strLog.Append(Environment.NewLine + "Update Records In FATO TABLE : " + DateTime.Now + Environment.NewLine + Environment.NewLine);
                 }
-                // }
             }
             catch (Exception ex)
             {
                 objlogger.WriteLogs = true;
-                strLog.Append(Environment.NewLine + "Exception in FATO Service : " + System.DateTime.Now + Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine);
-
-          
+                strLog.Append(Environment.NewLine + "Exception in FATO Service : " + DateTime.Now + Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine);
             }
             finally
             {

@@ -232,7 +232,7 @@ namespace Fato_Service
             da.Fill(dt);
             cmd.Parameters.Clear();
 
-            cmd.CommandTimeout = 900;
+            cmd.CommandTimeout = 1800;
 
             return dt;
         }

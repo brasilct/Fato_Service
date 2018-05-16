@@ -142,10 +142,10 @@ AS
         ELSE
             BEGIN
                 SET @query = @query + ' and date_of_booking >= '''
-                    + CONVERT(VARCHAR(11), @FromDate, 106)
-                    + '''  AND date_of_booking < DATEADD(DAY,1,'''
-                    + CONVERT(VARCHAR(11), @ToDate, 106)
-                    + ''') order by booking_ref desc '
+                    + CONVERT(VARCHAR, @FromDate)
+                    + '''  AND date_of_booking < '''
+                    + CONVERT(VARCHAR, @ToDate)
+                    + ''' order by booking_ref desc '
             END
 
         EXEC(@query)

@@ -26,9 +26,6 @@ AS
                 DECLARE @Record_Count_before INT
 					,	@Record_Count_After INT
 
-                SET	@FromDate = CONVERT(VARCHAR(11), @FromDate, 106)
-				SET @ToDate = CONVERT(VARCHAR(11), @ToDate, 106)
-
                 SELECT  @Record_Count_before = COUNT(*)
                 FROM    FATO_Records (NOLOCK)
 
@@ -40,7 +37,7 @@ AS
                 IF @Record_Count_After > @Record_Count_before
 					BEGIN
                         UPDATE  FATO_Service_Setting
-                        SET     Fato_Insert_Date = CONVERT(DATETIME, @FromDate)
+                        SET     Fato_Insert_Date = @ToDate
                         WHERE   Company_ID = @CMPNY_ID
                     END
             END

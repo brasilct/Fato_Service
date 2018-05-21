@@ -35,7 +35,7 @@ namespace Fato_Service
                 if (dt_FATO_Insert_Update.Rows.Count > 0)
                 {
                     DateTime FATO_Insert_Date = Convert.ToDateTime(dt_FATO_Insert_Update.Rows[0]["Fato_insert_date"]);
-                    DateTime CurrentDate = DateTime.Parse(DateTime.Now.ToString("dd/MM/yyyy HH:00:00"));
+                    DateTime CurrentDate = DateTime.Parse(DateTime.Now.ToString("MM/dd/yyyy HH:00:00"));
 
                     if (CurrentDate > FATO_Insert_Date)
                     {

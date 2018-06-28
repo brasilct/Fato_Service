@@ -4,6 +4,13 @@ GO
 /****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 19/06/2018 11:47:18 ******/
 
 /****
+    Date: 28/06/2018
+
+    Author: Rumenigue Nogueira
+
+    Details: Added room confirmation number
+***/
+/****
     Date: 27/06/2018
 
     Author: Rumenigue Nogueira
@@ -136,7 +143,14 @@ AS
 			Customer_Phone varchar(50),
 			Customer_Email varchar(255),
 			Origin varchar(255),
+			----------- Hotel Concilliation starts ----------
 			Confirm_Nro varchar(255),
+			Room1Confirm_nro VARCHAR(255),
+			Room2Confirm_nro VARCHAR(255),
+			Room3Confirm_nro VARCHAR(255),
+			Room4Confirm_nro VARCHAR(255),
+			Room5Confirm_nro VARCHAR(255),
+			----------- Hotel Concilliation ends ----------
 			------------ PAX info starts --------------
 
 			Pass_1_Type varchar (3),
@@ -1503,7 +1517,35 @@ AS
 							) AS ref ON allProducts.booking_ref = ref.booking_ref
 
 		---------- Pax Info Ends -------------
+		---------- Hotel Confirmation Starts -------------
+		UPDATE	allProducts
+		SET		Room1Confirm_nro = ref.confno_room1
+			,	Room2Confirm_nro = ref.confno_room2
+			,	Room3Confirm_nro = ref.confno_room3
+			,	Room4Confirm_nro = ref.confno_room4
+			,	Room5Confirm_nro = ref.confno_room5
+		FROM	#all_product AS allProducts
+				INNER JOIN (
+								SELECT	booking_ref
+									,	confno_room1 = MAX([confno_room1])
+									,	confno_room2 = MAX([confno_room2])
+									,	confno_room3 = MAX([confno_room3])
+									,	confno_room4 = MAX([confno_room4])
+									,	confno_room5 = MAX([confno_room5])
+								FROM	(
+											SELECT  booking_ref
+												,	confirmation_no
+												,	'confno_room' + CAST(RANK() OVER (PARTITION BY booking_ref ORDER BY confirmation_no) AS NVARCHAR) AS room
+											FROM    dbo.hotel_room_details (NOLOCK)
+											WHERE   booking_ref IN(SELECT booking_ref FROM #all_product)
+										) AS t
+										PIVOT	(MAX(confirmation_no)
+												FOR room IN([confno_room1], [confno_room2], [confno_room3], [confno_room4], [confno_room5])) AS pvt
+								GROUP BY booking_ref
+							) AS ref ON allProducts.Booking_Ref = ref.booking_ref
 
+		---------- Hotel Confirmation Ends -------------
+		
         IF ISNULL(@Booking_ref, '') = ''
             BEGIN
                 INSERT  INTO FATO_Records(
@@ -1635,6 +1677,11 @@ AS
 						Pass_9_Birthday,
 						
 						Confirm_Nro,
+						Room1Confirm_nro,
+						Room2Confirm_nro,
+						Room3Confirm_nro,
+						Room4Confirm_nro,
+						Room5Confirm_nro,
 						Agent_Name
 				)
                 SELECT  Booking_Ref ,
@@ -1764,7 +1811,14 @@ AS
 						Pass_9_Name,
 						Pass_9_Birthday,
 						------- Pax Info Ends ------
+						------- Hotel Confirmation Starts ------
 						Confirm_Nro,
+						Room1Confirm_nro,
+						Room2Confirm_nro,
+						Room3Confirm_nro,
+						Room4Confirm_nro,
+						Room5Confirm_nro,
+						------- Hotel Confirmation Ends ------
 						Agent_Name
                 FROM    #all_product
             END
@@ -1900,7 +1954,14 @@ AS
 						Pass_9_Name = AP.Pass_9_Name,
 						Pass_9_Birthday = AP.Pass_9_Birthday,
 						------- Pax Info Ends ------
+						------- Hotel Confirmation Starts ------
 						Confirm_Nro = AP.Confirm_Nro,
+						Room1Confirm_nro = AP.Room1Confirm_nro,
+						Room2Confirm_nro = AP.Room2Confirm_nro,
+						Room3Confirm_nro = AP.Room3Confirm_nro,
+						Room4Confirm_nro = AP.Room4Confirm_nro,
+						Room5Confirm_nro = AP.Room5Confirm_nro,
+						------- Hotel Confirmation Ends ------
 						Agent_Name = AP.Agent_Name
                 FROM    ( SELECT    *
                           FROM      #all_product

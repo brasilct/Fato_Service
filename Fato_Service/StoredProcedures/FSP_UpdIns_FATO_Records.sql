@@ -4,6 +4,13 @@ GO
 /****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 19/06/2018 11:47:18 ******/
 
 /****
+    Date: 27/06/2018
+
+    Author: Rumenigue Nogueira
+
+    Details: Pax info refactor + added agent_name
+***/
+/****
     Data: 19/06/2018
 
     Responsável: Jáder Tavares
@@ -15,7 +22,6 @@ GO
 
 SET QUOTED_IDENTIFIER ON
 GO
-
 
 ALTER PROCEDURE [dbo].[FSP_UpdIns_FATO_Records]
     @FromDate DATETIME = NULL ,
@@ -130,7 +136,39 @@ AS
 			Customer_Phone varchar(50),
 			Customer_Email varchar(255),
 			Origin varchar(255),
-			Confirm_Nro varchar(255)
+			Confirm_Nro varchar(255),
+			------------ PAX info starts --------------
+
+			Pass_1_Type varchar (3),
+			Pass_1_Name varchar (255),
+			Pass_1_Birthday varchar (50),
+			Pass_2_Type varchar (3),
+			Pass_2_Name varchar (255),
+			Pass_2_Birthday varchar (50),
+			Pass_3_Type varchar (3),
+			Pass_3_Name varchar (255),
+			Pass_3_Birthday varchar (50),
+			Pass_4_Type varchar (3),
+			Pass_4_Name varchar (255),
+			Pass_4_Birthday varchar (50),
+			Pass_5_Type varchar (3),
+			Pass_5_Name varchar (255),
+			Pass_5_Birthday varchar (50),
+			Pass_6_Type varchar (3),
+			Pass_6_Name varchar (255),
+			Pass_6_Birthday varchar (50),
+			Pass_7_Type varchar (3),
+			Pass_7_Name varchar (255),
+			Pass_7_Birthday varchar (50),
+			Pass_8_Type varchar (3),
+			Pass_8_Name varchar (255),
+			Pass_8_Birthday varchar (50),
+			Pass_9_Type varchar (3),
+			Pass_9_Name varchar (255),
+			Pass_9_Birthday varchar (50),
+			
+			------------ PAX info ends --------------
+			Agent_Name VARCHAR(255)
             )
 
         CREATE TABLE #all_booking_ref
@@ -150,13 +188,14 @@ AS
 			  Customer_Phone varchar(50),
 			  Customer_Email varchar(255),
 			  Origin varchar(255),
-			  Confirm_Nro varchar(255)
+			  Confirm_Nro varchar(255),
+			  Agent_Id VARCHAR(255)
             )
-
+			
         DECLARE @query VARCHAR(2000)
 
-        SET @query = '	insert into #all_booking_ref(Booking_Ref,Company_id,affiliate_id,Sales_Channel,date_of_booking,ClientCompanyCNPJ,destination,Final_Status,client_id, branch_id)
-						select booking_ref,company_id,affiliate_id,Sales_Channel,date_of_booking,ClientCompanyCNPJ,destination,Final_Status,client_id, branch_id
+        SET @query = '	insert into #all_booking_ref(Booking_Ref,Company_id,affiliate_id,Sales_Channel,date_of_booking,ClientCompanyCNPJ,destination,Final_Status,client_id, branch_id, Agent_Id)
+						select booking_ref,company_id,affiliate_id,Sales_Channel,date_of_booking,ClientCompanyCNPJ,destination,Final_Status,client_id, branch_id, agent_id
 						from booking_master (nolock)
 						where company_id=''' + @Company_Id + ''''
 
@@ -324,7 +363,12 @@ AS
 				Customer_Phone varchar(50),
 				Customer_Email varchar(255),
 				Origin varchar(255),
-				Confirm_Nro varchar(255)
+				Confirm_Nro varchar(255),
+				--------- PAX info Starts --------
+				--------- PAX info Ends --------
+				--------- Agent info Starts --------
+				Agent_Name VARCHAR(255)
+				--------- Agent info Ends --------
             )
 	
 	--insert data into the temp table from all sp's
@@ -484,7 +528,8 @@ AS
 						cm.mobile as Customer_Phone,
 						cm.email_address as Customer_Email,
 						fd.origin as Origin,
-						'' as Confirm_Nro
+						'' as Confirm_Nro,
+						ad.agent_name
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN flight_details fd ( NOLOCK ) ON fd.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN ( SELECT flight_id ,
@@ -506,6 +551,7 @@ AS
                                    ) ff ON ff.flight_id = fd.flight_id
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
                         INNER JOIN client_master cm ( NOLOCK ) ON cm.client_id = ABR.client_id
+						INNER JOIN dbo.Agent_Details ad ( NOLOCK ) ON ABR.Agent_Id = ad.agent_id
                         LEFT OUTER JOIN ( SELECT    flight_id ,
                                                     SUM(ISNULL(airline_charge,
                                                               0)
@@ -730,11 +776,13 @@ AS
 						cm.mobile as Customer_Phone,
 						cm.email_address as Customer_Email,
 						'' as Origin,
-						hb.hotel_confirmation_no as Confirm_Nro
+						hb.hotel_confirmation_no as Confirm_Nro,
+						ad.agent_name
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN hotel_booking hb ( NOLOCK ) ON hb.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
                         INNER JOIN client_master cm ( NOLOCK ) ON cm.client_id = ABR.client_id
+						INNER JOIN dbo.Agent_Details ad ( NOLOCK ) ON ABR.Agent_Id = ad.agent_id
                         LEFT OUTER JOIN Supplier_Master sm ( NOLOCK ) ON sm.Supplier_Id = hb.supplier_code
                         LEFT OUTER JOIN Affiliate_Master am ( NOLOCK ) ON am.affiliate_id = ABR.affiliate_id
                         LEFT OUTER JOIN ( SELECT    ppa.booking_ref ,
@@ -940,11 +988,13 @@ AS
 						cm.mobile as Customer_Phone,
 						cm.email_address as Customer_Email,
 						'' as Origin,
-						'' as Confirm_Nro
+						'' as Confirm_Nro,
+						ad.agent_name
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
                         INNER JOIN product_bookings pb ( NOLOCK ) ON pb.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN client_master cm ( NOLOCK ) ON cm.client_id = ABR.client_id
+						INNER JOIN dbo.Agent_Details ad ( NOLOCK ) ON ABR.Agent_Id = ad.agent_id
                         LEFT OUTER JOIN Affiliate_Master am ( NOLOCK ) ON am.affiliate_id = ABR.affiliate_id
                         LEFT OUTER JOIN XchangeAdmin.dbo.st_City sc ( NOLOCK ) ON sc.CityCode = pb.destination
                         LEFT OUTER JOIN ( SELECT    ppa.booking_ref ,
@@ -1273,7 +1323,8 @@ AS
 	  Customer_Phone = tt.Customer_Phone,
 	  Customer_Email = tt.Customer_Email,
 	  Origin = tt.Origin,
-	  Confirm_Nro = tt.Confirm_Nro
+	  Confirm_Nro = tt.Confirm_Nro,
+	  Agent_Name = tt.Agent_Name
       from (select * from #tmptbl
 			where Booking_Ref=(select Booking_Ref from #all_booking_ref where RecordId='
                                     + CONVERT(VARCHAR(10), @BookingNo)
@@ -1362,10 +1413,101 @@ AS
             SET @BookingNo = @BookingNo + 1
         END
 
+
+		--------- Pax Info Starts ------------
+		
+		UPDATE	allProducts
+		SET		Pass_1_Type = ref.pax_type1
+			,	Pass_1_Name = ref.pax_name1
+			,	Pass_1_Birthday = ref.pax_birthday1
+			,	Pass_2_Type = ref.pax_type2
+			,	Pass_2_Name = ref.pax_name2
+			,	Pass_2_Birthday = ref.pax_birthday2
+			,	Pass_3_Type = ref.pax_type3
+			,	Pass_3_Name = ref.pax_name3
+			,	Pass_3_Birthday = ref.pax_birthday3
+			,	Pass_4_Type = ref.pax_type4
+			,	Pass_4_Name = ref.pax_name4
+			,	Pass_4_Birthday = ref.pax_birthday4
+			,	Pass_5_Type = ref.pax_type5
+			,	Pass_5_Name = ref.pax_name5
+			,	Pass_5_Birthday = ref.pax_birthday5
+			,	Pass_6_Type = ref.pax_type6
+			,	Pass_6_Name = ref.pax_name6
+			,	Pass_6_Birthday = ref.pax_birthday6
+			,	Pass_7_Type = ref.pax_type7
+			,	Pass_7_Name = ref.pax_name7
+			,	Pass_7_Birthday = ref.pax_birthday7
+			,	Pass_8_Type = ref.pax_type8
+			,	Pass_8_Name = ref.pax_name8
+			,	Pass_8_Birthday = ref.pax_birthday8
+			,	Pass_9_Type = ref.pax_type9
+			,	Pass_9_Name = ref.pax_name9
+			,	Pass_9_Birthday = ref.pax_birthday9
+		FROM	#all_product AS allProducts
+				INNER JOIN (
+								SELECT	booking_ref
+									,	pax_type1 = MAX(paxtype1)
+									,	pax_name1 = MAX(paxname1)
+									,	pax_birthday1 = MAX(paxbirth1)
+
+									,	pax_type2 = MAX(paxtype2)
+									,	pax_name2 = MAX(paxname2)
+									,	pax_birthday2 = MAX(paxbirth2)
+
+									,	pax_type3 = MAX(paxtype3)
+									,	pax_name3 = MAX(paxname3)
+									,	pax_birthday3 = MAX(paxbirth3)
+
+									,	pax_type4 = MAX(paxtype4)
+									,	pax_name4 = MAX(paxname4)
+									,	pax_birthday4 = MAX(paxbirth4)
+
+									,	pax_type5 = MAX(paxtype5)
+									,	pax_name5 = MAX(paxname5)
+									,	pax_birthday5 = MAX(paxbirth5)
+
+									,	pax_type6 = MAX(paxtype6)
+									,	pax_name6 = MAX(paxname6)
+									,	pax_birthday6 = MAX(paxbirth6)
+
+									,	pax_type7 = MAX(paxtype7)
+									,	pax_name7 = MAX(paxname7)
+									,	pax_birthday7 = MAX(paxbirth7)
+
+									,	pax_type8 = MAX(paxtype8)
+									,	pax_name8 = MAX(paxname8)
+									,	pax_birthday8 = MAX(paxbirth8)
+
+									,	pax_type9 = MAX(paxtype9)
+									,	pax_name9 = MAX(paxname9)
+									,	pax_birthday9 = MAX(paxbirth9)
+								FROM	(
+											SELECT	pd.booking_ref
+												,	pd.pax_type
+												,	( ISNULL(first_name, '') + ' ' + ISNULL(middle_name, '') + ' ' + ISNULL(last_name, '') ) AS pax_name
+												,	pd.date_of_birth AS pax_birthday
+												,	'paxtype' + CAST(RANK() OVER (PARTITION BY pd.booking_ref ORDER BY pd.pax_id) AS NVARCHAR) AS pax_typen
+												,	'paxname' + CAST(RANK() OVER (PARTITION BY pd.booking_ref ORDER BY pd.pax_id) AS NVARCHAR) AS pax_namen
+												,	'paxbirth' + CAST(RANK() OVER (PARTITION BY pd.booking_ref ORDER BY pd.pax_id) AS NVARCHAR) AS pax_birthn
+											FROM    dbo.passenger_details pd ( NOLOCK )
+											WHERE	pd.booking_ref IN(SELECT booking_ref FROM #all_product)
+										) AS query
+										PIVOT	(MAX(pax_type)
+												FOR	pax_typen IN ([paxtype1], [paxtype2], [paxtype3], [paxtype4], [paxtype5], [paxtype6], [paxtype7], [paxtype8], [paxtype9])) AS pvt1
+										PIVOT	(MAX(pax_name)
+												FOR pax_namen IN ([paxname1], [paxname2], [paxname3], [paxname4], [paxname5], [paxname6], [paxname7], [paxname8], [paxname9])) AS pvt2
+										PIVOT	(MAX(pax_birthday)
+												FOR	pax_birthn IN ([paxbirth1], [paxbirth2], [paxbirth3], [paxbirth4], [paxbirth5], [paxbirth6], [paxbirth7], [paxbirth8], [paxbirth9])) AS pvt3
+								GROUP BY booking_ref
+							) AS ref ON allProducts.booking_ref = ref.booking_ref
+
+		---------- Pax Info Ends -------------
+
         IF ISNULL(@Booking_ref, '') = ''
             BEGIN
                 INSERT  INTO FATO_Records(
-					Booking_Ref ,
+						Booking_Ref ,
                         Company_id ,
                         Affiliate_Id ,
                         CPF_No ,
@@ -1455,6 +1597,7 @@ AS
 						Customer_Phone,
 						Customer_Email,
 						Origin,
+
 						Pass_1_Type,
 						Pass_1_Name,
 						Pass_1_Birthday,
@@ -1490,8 +1633,9 @@ AS
 						Pass_9_Type,
 						Pass_9_Name,
 						Pass_9_Birthday,
-						Confirm_Nro
-
+						
+						Confirm_Nro,
+						Agent_Name
 				)
                 SELECT  Booking_Ref ,
                         Company_id ,
@@ -1583,168 +1727,45 @@ AS
 						Customer_Phone,
 						Customer_Email,
 						Origin,
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 1),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 1),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 1),
+						------ Pax Info Starts -----
+						Pass_1_Type,
+						Pass_1_Name,
+						Pass_1_Birthday,
 
-							-----------------------------------
-							
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 2),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 2),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 2),					
+						Pass_2_Type,
+						Pass_2_Name,
+						Pass_2_Birthday,
 
-							-----------------------------------
+						Pass_3_Type,
+						Pass_3_Name,
+						Pass_3_Birthday,
 
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 3),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 3),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 3),						
+						Pass_4_Type,
+						Pass_4_Name,
+						Pass_4_Birthday,
 
-							-----------------------------------
+						Pass_5_Type,
+						Pass_5_Name,
+						Pass_5_Birthday,
 
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 4),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 4),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 4),					
+						Pass_6_Type,
+						Pass_6_Name,
+						Pass_6_Birthday,
 
-							-----------------------------------
+						Pass_7_Type,
+						Pass_7_Name,
+						Pass_7_Birthday,
 
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 5),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 5),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 5),						
+						Pass_8_Type,
+						Pass_8_Name,
+						Pass_8_Birthday,
 
-							-----------------------------------
-
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 6),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 6),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 6),						
-
-							-----------------------------------
-
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 7),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 7),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 7),						
-
-							-----------------------------------
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 8),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 8),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 8),						
-
-							-----------------------------------
-
-						(select pax_type from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, pax_type
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 9),
-						(select pass_name from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, (ISNULL(first_name,'') + ' ' + ISNULL(middle_name,'') + ' ' + ISNULL(last_name,'')) as pass_name
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 9),
-						(select Pass_Birthday from (
-							SELECT  top 1 (ROW_NUMBER() OVER(ORDER BY pax_id ASC)) as rownum, date_of_birth as Pass_Birthday
-							FROM            dbo.passenger_details pd
-							WHERE        pd.booking_ref = #all_product.Booking_Ref) as t
-							where rownum = 9),
-							Confirm_Nro
-
-
-
+						Pass_9_Type,
+						Pass_9_Name,
+						Pass_9_Birthday,
+						------- Pax Info Ends ------
+						Confirm_Nro,
+						Agent_Name
                 FROM    #all_product
             END
         ELSE
@@ -1842,7 +1863,45 @@ AS
 						Customer_Phone = AP.Customer_Phone,
 						Customer_Email = AP.Customer_Email,
 						Origin = AP.Origin,
-						Confirm_Nro = AP.Confirm_Nro
+						------ Pax Info Starts -----
+						Pass_1_Type = AP.Pass_1_Type,
+						Pass_1_Name = AP.Pass_1_Name,
+						Pass_1_Birthday = AP.Pass_1_Birthday,
+
+						Pass_2_Type = AP.Pass_2_Type,
+						Pass_2_Name = AP.Pass_2_Name,
+						Pass_2_Birthday = AP.Pass_2_Birthday,
+
+						Pass_3_Type = AP.Pass_3_Type,
+						Pass_3_Name = AP.Pass_3_Name,
+						Pass_3_Birthday = AP.Pass_3_Birthday,
+
+						Pass_4_Type = AP.Pass_4_Type,
+						Pass_4_Name = AP.Pass_4_Name,
+						Pass_4_Birthday = AP.Pass_4_Birthday,
+
+						Pass_5_Type = AP.Pass_5_Type,
+						Pass_5_Name = AP.Pass_5_Name,
+						Pass_5_Birthday = AP.Pass_5_Birthday,
+
+						Pass_6_Type = AP.Pass_6_Type,
+						Pass_6_Name = AP.Pass_6_Name,
+						Pass_6_Birthday = AP.Pass_6_Birthday,
+
+						Pass_7_Type = AP.Pass_7_Type,
+						Pass_7_Name = AP.Pass_7_Name,
+						Pass_7_Birthday = AP.Pass_7_Birthday,
+
+						Pass_8_Type = AP.Pass_8_Type,
+						Pass_8_Name = AP.Pass_8_Name,
+						Pass_8_Birthday = AP.Pass_8_Birthday,
+
+						Pass_9_Type = AP.Pass_9_Type,
+						Pass_9_Name = AP.Pass_9_Name,
+						Pass_9_Birthday = AP.Pass_9_Birthday,
+						------- Pax Info Ends ------
+						Confirm_Nro = AP.Confirm_Nro,
+						Agent_Name = AP.Agent_Name
                 FROM    ( SELECT    *
                           FROM      #all_product
                         ) AS AP
@@ -1851,5 +1910,3 @@ AS
         SET FMTONLY ON
     END  
 GO
-
-

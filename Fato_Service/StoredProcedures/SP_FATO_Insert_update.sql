@@ -29,7 +29,7 @@ AS
                 SELECT  @Record_Count_before = COUNT(*)
                 FROM    FATO_Records (NOLOCK)
 
-                EXEC FSP_UpdIns_FATO_Records @FromDate, @ToDate, @CMPNY_ID, 'ALL', 1 
+                EXEC FSP_UpdIns_FATO_Records @FromDate, @ToDate, @CMPNY_ID, 'ALL', 1, @Booking_ref
 
                 SELECT  @Record_Count_After = COUNT(*)
                 FROM    FATO_Records (NOLOCK)
@@ -41,7 +41,7 @@ AS
                         WHERE   Company_ID = @CMPNY_ID
                     END
             END
-        IF @QUERY = 3 -- query to Update Data in FATO_Records
+        IF @QUERY = 3 -- query to Update Data in FATO_Records / Also checks for refs that were not originally added to FATO_Records table
             BEGIN
                 CREATE TABLE #FATO_Records_update
                     (
@@ -54,6 +54,12 @@ AS
                 SELECT  Booking_Ref
                 FROM    FATO_Records (NOLOCK)
                 WHERE   Change_Status = 1
+				UNION -- missing refs
+                SELECT  booking_ref
+				FROM    dbo.booking_master (NOLOCK)
+				WHERE   date_of_booking > '20180101'
+						AND booking_ref NOT IN ( SELECT Booking_Ref
+												 FROM   dbo.FATO_Records (NOLOCK))
 
                 DECLARE @Record_Count INT
 					,	@New_Record_Count INT

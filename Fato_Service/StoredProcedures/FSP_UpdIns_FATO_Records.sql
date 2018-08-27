@@ -1,36 +1,11 @@
 USE [BookingDB_ERP_BC]
 GO
 
-/****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 19/06/2018 11:47:18 ******/
-
-/****
-    Date: 28/06/2018
-
-    Author: Rumenigue Nogueira
-
-    Details: Added room confirmation number
-***/
-/****
-    Date: 27/06/2018
-
-    Author: Rumenigue Nogueira
-
-    Details: Pax info refactor + added agent_name
-***/
-/****
-    Data: 19/06/2018
-
-    Responsável: Jáder Tavares
-
-    Detalhe : Adição dos novos campos para o relatório da Fato
-***/
+SET QUOTED_IDENTIFIER ON
 SET ANSI_NULLS ON
 GO
 
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER PROCEDURE [dbo].[FSP_UpdIns_FATO_Records]
+CREATE PROCEDURE [dbo].[FSP_UpdIns_FATO_Records]
     @FromDate DATETIME = NULL ,
     @ToDate DATETIME = NULL ,
     @Company_Id VARCHAR(10) ,
@@ -1546,7 +1521,9 @@ AS
 
 		---------- Hotel Confirmation Ends -------------
 		
-        IF ISNULL(@Booking_ref, '') = ''
+		
+
+        IF (ISNULL(@Booking_ref, '') = '' OR (SELECT COUNT(Booking_Ref) FROM dbo.FATO_Records (NOLOCK) WHERE Booking_Ref = @Booking_ref) = 0)
             BEGIN
                 INSERT  INTO FATO_Records(
 						Booking_Ref ,

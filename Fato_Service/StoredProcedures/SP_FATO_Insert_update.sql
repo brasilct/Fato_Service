@@ -93,7 +93,12 @@ AS
                                          )
                     END
 
-                SELECT  ROW_NUMBER() OVER ( ORDER BY Booking_Ref ASC ) AS Row# ,
+				--Erase Alias, If exists in DB
+				IF Object_ID('tempdb..#tmp_tab_fato_query_5') IS NOT NULL
+				DROP TABLE #tmp_tab_fato_query_5
+
+                SELECT  
+						DISTINCT
                         Booking_Ref ,
                         Company_id ,
                         ISNULL(Affiliate_Id, '') Affiliate_Id ,
@@ -178,12 +183,17 @@ AS
                         ISNULL(Discount_Type2, '') Discount_Type2 ,
                         ISNULL(Discount_Type3, '') Discount_Type3 ,
                         ISNULL(branch_id, '') branch_id
+				INTO #tmp_tab_fato_query_5 
                 FROM    FATO_Records (NOLOCK)
                 WHERE   Booking_Date >= @FromDate
                         AND Booking_Date < DATEADD(DAY, 1, @ToDate)
                         AND branch_id IN (
                         SELECT  value
                         FROM    dbo.fnSeprator(@branch_Id, ',') )
+
+				SELECT
+					ROW_NUMBER() OVER (ORDER BY Booking_Ref ASC ) AS Row# , *
+					FROM #tmp_tab_fato_query_5
             END
     END
 GO

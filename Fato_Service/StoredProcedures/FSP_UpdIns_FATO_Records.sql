@@ -194,11 +194,16 @@ AS
             END
         ELSE
             BEGIN
-                SET @query = @query + ' and date_of_booking >= '''
-                    + CONVERT(VARCHAR, @FromDate)
-                    + '''  AND date_of_booking < '''
-                    + CONVERT(VARCHAR, @ToDate)
-                    + ''' order by booking_ref desc '
+
+				SET @query = @query + ' and date_of_booking >= '''
+					+ Convert(Varchar(11),@FromDate,106)
+					+ '''  AND date_of_booking < DATEADD(DAY,1,''' 
+					+ Convert(Varchar(11),@ToDate,106)
+					+ ''') and booking_ref not in (select booking_ref from FATO_Records where date_of_booking >= '''
+					+ Convert(Varchar(11),@FromDate,106) 
+					+ '''  AND date_of_booking < DATEADD(DAY,1,''' 
+					+ Convert(Varchar(11),@ToDate,106)
+					+ ''')) order by booking_ref desc '  
             END
 
         EXEC(@query)

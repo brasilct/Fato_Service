@@ -1,8 +1,9 @@
 USE [BookingDB_ERP_BC]
 GO
-
-SET QUOTED_IDENTIFIER ON
+/****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 13/12/2018 14:55:06 ******/
 SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROCEDURE [dbo].[FSP_UpdIns_FATO_Records]
@@ -86,7 +87,8 @@ AS
               CC_Company3 VARCHAR(50) ,
               CC_Company4 VARCHAR(50) ,
               Change_Status BIT ,
-
+			  Canx_Remark VARCHAR(100) ,
+			  Transaction_ID VARCHAR(100) ,
       --------------------------Recurrence------------------------------------------  
               CC_AmountRecurrence1 DECIMAL(18, 3) ,
               Installment_AmountRecurrence1 DECIMAL(18, 3) ,
@@ -194,8 +196,7 @@ AS
             END
         ELSE
             BEGIN
-
-				SET @query = @query + ' and date_of_booking >= '''
+                SET @query = @query + ' and date_of_booking >= '''
 					+ Convert(Varchar(11),@FromDate,106)
 					+ '''  AND date_of_booking < DATEADD(DAY,1,''' 
 					+ Convert(Varchar(11),@ToDate,106)
@@ -361,8 +362,10 @@ AS
 				--------- PAX info Starts --------
 				--------- PAX info Ends --------
 				--------- Agent info Starts --------
-				Agent_Name VARCHAR(255)
+				Agent_Name VARCHAR(255),
 				--------- Agent info Ends --------
+				Canx_Remark VARCHAR(100) ,
+				Transaction_ID VARCHAR(100) ,
             )
 	
 	--insert data into the temp table from all sp's
@@ -524,6 +527,10 @@ AS
 						fd.origin as Origin,
 						'' as Confirm_Nro,
 						ad.agent_name
+						, Transaction_ID = (
+								select
+								isnull(payment.Transaction_ID, '') as Transaction_ID from payment where booking_ref = fd.Booking_Ref and Transaction_ID is not null
+						)
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN flight_details fd ( NOLOCK ) ON fd.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN ( SELECT flight_id ,
@@ -771,7 +778,9 @@ AS
 						cm.email_address as Customer_Email,
 						'' as Origin,
 						hb.hotel_confirmation_no as Confirm_Nro,
-						ad.agent_name
+						ad.agent_name,
+						'' as Canx_Remark,
+						'' as Transaction_ID
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN hotel_booking hb ( NOLOCK ) ON hb.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
@@ -983,7 +992,9 @@ AS
 						cm.email_address as Customer_Email,
 						'' as Origin,
 						'' as Confirm_Nro,
-						ad.agent_name
+						ad.agent_name,
+						'' as Canx_Remark,
+						'' as Transaction_ID
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
                         INNER JOIN product_bookings pb ( NOLOCK ) ON pb.Booking_Ref = ABR.Booking_Ref
@@ -1318,7 +1329,9 @@ AS
 	  Customer_Email = tt.Customer_Email,
 	  Origin = tt.Origin,
 	  Confirm_Nro = tt.Confirm_Nro,
-	  Agent_Name = tt.Agent_Name
+	  Agent_Name = tt.Agent_Name,
+	  Canx_Remark = tt.Canx_Remark,
+	  Transaction_ID = tt.Transaction_ID
       from (select * from #tmptbl
 			where Booking_Ref=(select Booking_Ref from #all_booking_ref where RecordId='
                                     + CONVERT(VARCHAR(10), @BookingNo)
@@ -1664,7 +1677,9 @@ AS
 						Room3Confirm_nro,
 						Room4Confirm_nro,
 						Room5Confirm_nro,
-						Agent_Name
+						Agent_Name,
+						Canx_Remark,
+						Transaction_ID
 				)
                 SELECT  Booking_Ref ,
                         Company_id ,
@@ -1801,7 +1816,9 @@ AS
 						Room4Confirm_nro,
 						Room5Confirm_nro,
 						------- Hotel Confirmation Ends ------
-						Agent_Name
+						Agent_Name,
+						Canx_Remark,
+						Transaction_ID
                 FROM    #all_product
             END
         ELSE
@@ -1944,7 +1961,9 @@ AS
 						Room4Confirm_nro = AP.Room4Confirm_nro,
 						Room5Confirm_nro = AP.Room5Confirm_nro,
 						------- Hotel Confirmation Ends ------
-						Agent_Name = AP.Agent_Name
+						Agent_Name = AP.Agent_Name,
+						Canx_Remark = AP.Canx_Remark,
+						Transaction_ID = AP.Transaction_ID
                 FROM    ( SELECT    *
                           FROM      #all_product
                         ) AS AP
@@ -1952,4 +1971,3 @@ AS
             END  
         SET FMTONLY ON
     END  
-GO

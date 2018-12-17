@@ -1,8 +1,9 @@
-USE BookingDB_ERP_BC
+USE [BookingDB_ERP_BC]
 GO
-
-SET QUOTED_IDENTIFIER ON
+/****** Object:  StoredProcedure [dbo].[SP_FATO_Insert_update]    Script Date: 13/12/2018 14:56:05 ******/
 SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROC [dbo].[SP_FATO_Insert_update]
@@ -99,7 +100,7 @@ AS
                                          )
                     END
 
-				--Erase Alias, If exists in DB
+                --Erase Alias, If exists in DB
 				IF Object_ID('tempdb..#tmp_tab_fato_query_5') IS NOT NULL
 				DROP TABLE #tmp_tab_fato_query_5
 
@@ -188,7 +189,9 @@ AS
                         ISNULL(Discount_Type1, '') Discount_Type1 ,
                         ISNULL(Discount_Type2, '') Discount_Type2 ,
                         ISNULL(Discount_Type3, '') Discount_Type3 ,
-                        ISNULL(branch_id, '') branch_id
+                        ISNULL(branch_id, '') branch_id,
+						ISNULL(Canx_Remark, '') Canx_Remark ,
+						ISNULL(Transaction_ID, '') Transaction_ID
 				INTO #tmp_tab_fato_query_5 
                 FROM    FATO_Records (NOLOCK)
                 WHERE   Booking_Date >= @FromDate
@@ -202,4 +205,3 @@ AS
 					FROM #tmp_tab_fato_query_5
             END
     END
-GO

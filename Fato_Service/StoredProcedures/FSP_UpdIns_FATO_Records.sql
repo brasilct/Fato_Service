@@ -1,6 +1,6 @@
 USE [BookingDB_ERP_BC]
 GO
-/****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 13/12/2018 14:55:06 ******/
+/****** Object:  StoredProcedure [dbo].[FSP_UpdIns_FATO_Records]    Script Date: 12/02/2019 11:04:03 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -527,9 +527,15 @@ AS
 						fd.origin as Origin,
 						'' as Confirm_Nro,
 						ad.agent_name
+						, Canx_Remark = isnull(
+							(
+								fd.flight_Canx_Remark
+							),
+						(select pb.cancellation_remarks from product_bookings pb ( NOLOCK) where pb.booking_ref = ABR.Booking_Ref))
+						
 						, Transaction_ID = (
 								select
-								isnull(payment.Transaction_ID, '') as Transaction_ID from payment where booking_ref = fd.Booking_Ref and Transaction_ID is not null
+								isnull(pm.Transaction_ID, '') as Transaction_ID from payment pm ( NOLOCK ) where pm.booking_ref = ABR.Booking_Ref and pm.Transaction_ID is not null
 						)
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN flight_details fd ( NOLOCK ) ON fd.Booking_Ref = ABR.Booking_Ref
@@ -778,9 +784,19 @@ AS
 						cm.email_address as Customer_Email,
 						'' as Origin,
 						hb.hotel_confirmation_no as Confirm_Nro,
-						ad.agent_name,
-						'' as Canx_Remark,
-						'' as Transaction_ID
+						ad.agent_name
+						
+						, Canx_Remark = isnull(
+							(
+								select
+								isnull(fd.flight_Canx_Remark, '') as Canx_Remark from flight_details fd ( NOLOCK ) where fd.booking_ref = ABR.Booking_Ref
+							),
+						(select pb.cancellation_remarks from product_bookings pb ( NOLOCK) where pb.booking_ref = ABR.Booking_Ref))
+
+						, Transaction_ID = (
+								select
+								isnull(pm.Transaction_ID, '') as Transaction_ID from payment pm ( NOLOCK ) where pm.booking_ref = ABR.Booking_Ref and pm.Transaction_ID is not null
+						)
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN hotel_booking hb ( NOLOCK ) ON hb.Booking_Ref = ABR.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
@@ -992,9 +1008,20 @@ AS
 						cm.email_address as Customer_Email,
 						'' as Origin,
 						'' as Confirm_Nro,
-						ad.agent_name,
-						'' as Canx_Remark,
-						'' as Transaction_ID
+						ad.agent_name
+						
+						, Canx_Remark = isnull(
+							(
+								select
+								isnull(fd.flight_Canx_Remark, '') as Canx_Remark from flight_details fd ( NOLOCK ) where fd.booking_ref = ABR.Booking_Ref
+							),
+						(select pb.cancellation_remarks from product_bookings pb ( NOLOCK) where pb.booking_ref = ABR.Booking_Ref))
+
+						, Transaction_ID = (
+								select
+								isnull(pm.Transaction_ID, '') as Transaction_ID from payment pm ( NOLOCK ) where pm.booking_ref = ABR.Booking_Ref and pm.Transaction_ID is not null
+						)
+						
                 FROM    #all_booking_ref ABR --INNER JOIN booking_master bm on bm.booking_ref=#all_booking_ref.Booking_Ref
                         INNER JOIN AgentName_VW agv ( NOLOCK ) ON ABR.Booking_Ref = agv.Booking_Ref
                         INNER JOIN product_bookings pb ( NOLOCK ) ON pb.Booking_Ref = ABR.Booking_Ref
@@ -1819,6 +1846,7 @@ AS
 						Agent_Name,
 						Canx_Remark,
 						Transaction_ID
+
                 FROM    #all_product
             END
         ELSE

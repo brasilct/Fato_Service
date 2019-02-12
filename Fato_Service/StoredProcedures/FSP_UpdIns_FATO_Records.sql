@@ -791,7 +791,7 @@ AS
 								select
 								isnull(fd.flight_Canx_Remark, '') as Canx_Remark from flight_details fd ( NOLOCK ) where fd.booking_ref = ABR.Booking_Ref
 							),
-						(select pb.cancellation_remarks from product_bookings pb ( NOLOCK) where pb.booking_ref = ABR.Booking_Ref))
+						isnull((select pb.cancellation_remarks from product_bookings pb ( NOLOCK) where pb.booking_ref = ABR.Booking_Ref), hb.cancellation_remarks))
 
 						, Transaction_ID = (
 								select
